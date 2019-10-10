@@ -1,0 +1,71 @@
+import pprint
+import pyeapi
+import re
+import traceback
+switches =[]
+i=101
+while i<201:
+    fourh_octet=i
+    IP= "10.129.34."+str(fourh_octet)
+    i = i+1
+    switches.append(IP)
+
+genelbakir1gi=0
+genelbakir10gi=0
+genelfiber1gi=0
+genelfiber10gi=0
+
+try:
+
+    for i in switches:
+        try:
+            node = pyeapi.connect(transport="https", host=i, username="xxxxx", password="xxxxx", port=None)
+            print i
+
+            a=1
+            version=node.execute((["show version"]))
+            parse=re.split(r'-',version['result'][0]['modelName'])
+            parsing=re.split('0',parse[1])
+            print parsing[1]
+            copperorfiber= parsing[1]
+            sum1gi=0
+            sum10gi=0
+            while 0<a<49:
+                showinterface= node.execute(["show interfaces ethernet"+' '+str(a) ])
+            #   pprint.pprint (showinterface)
+                for m in showinterface['result'][0]['interfaces']:
+                    #pprint.pprint(showinterface['result'][0]['interfaces'][m]['interfaceStatus'])
+                    if showinterface['result'][0]['interfaces'][m]['interfaceStatus']=='connected':
+                        print m
+                        #pprint.pprint (showinterface['result'][0]['interfaces'][m]['bandwidth'])
+                        speed=showinterface['result'][0]['interfaces'][m]['bandwidth']/1000000000
+                        print speed
+                        if speed==10:
+                            sum10gi=sum10gi+1
+                        elif speed==1:
+                            sum1gi=sum1gi+1
+                    else:
+                        continue
+                a=a+1
+            print sum1gi
+            print sum10gi
+            if copperorfiber == 'TR':
+                genelbakir1gi=genelbakir1gi+sum1gi
+                genelbakir10gi = genelbakir10gi + sum10gi
+            elif copperorfiber == 'SR':
+                genelfiber1gi=genelfiber1gi+sum1gi
+                genelfiber10gi = genelfiber10gi + sum10gi
+        except Exception as e:
+            print "connection problem>>" + str(e)
+            print(traceback.format_exc())
+
+
+
+    print "toplam connnected bakir 1gi sayisi:"+' '+str(genelbakir1gi)
+    print "toplam connnected bakir 10gi sayisi:"+' '+str(genelbakir10gi)
+    print "toplam connnected fiber 1gi sayisi:"+' '+str(genelfiber1gi)
+    print "toplam connnected fiber 10gi sayisi:"+' '+str(genelfiber10gi)
+
+except Exception as e:
+    print 'Error:Any problem exists in your code >> '+str(e)
+    print(traceback.format_exc())
